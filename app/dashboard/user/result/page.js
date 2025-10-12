@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function ResultPage() {
+function ResultPageContent() {
   const params = useSearchParams();
   const router = useRouter();
 
@@ -137,5 +137,18 @@ export default function ResultPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResultPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-sky-500 text-white">
+        <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-lg font-semibold">Loading Result...</p>
+      </div>
+    }>
+      <ResultPageContent />
+    </Suspense>
   );
 }
