@@ -3,10 +3,8 @@ const nextConfig = {
   // Enable standalone output for Docker
   output: 'standalone',
   
-  // Optimize for production
-  experimental: {
-    serverComponentsExternalPackages: ['mongodb', 'ioredis']
-  },
+  // External packages for server components
+  serverExternalPackages: ['mongodb', 'ioredis'],
   
   // Environment variables
   env: {
