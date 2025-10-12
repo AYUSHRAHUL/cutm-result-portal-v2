@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cutm-portal-config
+  namespace: cutm-portal
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  HOSTNAME: "0.0.0.0"
+  MONGO_URI: "mongodb://mongodb-service:27017/cutm1"
+  REDIS_URL: "redis://redis-service:6379"
+  JWT_SECRET: "your-super-secret-jwt-key-change-in-production"
+  EMAIL_USER: "your-email@gmail.com"
+  EMAIL_PASS: "your-app-password"
