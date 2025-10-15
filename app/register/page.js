@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1); // 1: Basic info, 2: OTP verification
@@ -79,21 +80,22 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_15%_10%,rgba(99,102,241,0.18),transparent_55%),radial-gradient(circle_at_85%_20%,rgba(168,85,247,0.16),transparent_55%),radial-gradient(circle_at_30%_85%,rgba(16,185,129,0.12),transparent_55%),linear-gradient(135deg,#1e3a8a_0%,#312e81_100%)] flex flex-col">
+    <div className="min-h-svh relative bg-[radial-gradient(circle_at_15%_10%,rgba(99,102,241,0.18),transparent_55%),radial-gradient(circle_at_85%_20%,rgba(168,85,247,0.16),transparent_55%),radial-gradient(circle_at_30%_85%,rgba(16,185,129,0.12),transparent_55%),linear-gradient(135deg,#1e3a8a_0%,#312e81_100%)] flex flex-col">
       {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
       </div>
       
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+        <div className="scale-[0.75] origin-top">
         <form onSubmit={handleSubmit} className="w-full max-w-md rounded-3xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-2xl">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-br from-white/20 to-white/10 border border-white/20 text-white text-3xl shadow-2xl backdrop-blur-sm">
-            {step === 1 ? "📝" : step === 2 ? "🔐" : "✅"}
+          <div className="mx-auto mb-3 flex items-center justify-center">
+            <Image src="/spinner.jpg" alt="College logo" width={128} height={128} className="rounded-full shadow-md" priority />
           </div>
-          <h2 className="mt-4 text-4xl font-extrabold bg-gradient-to-r from-white via-indigo-200 to-purple-200 bg-clip-text text-transparent drop-shadow-lg">
+          <h2 className="mt-1 text-4xl font-extrabold bg-gradient-to-r from-white via-indigo-200 to-purple-200 bg-clip-text text-transparent drop-shadow-lg">
             {step === 1 ? "Join CUTM Portal" : step === 2 ? "Verify Your Email" : "Registration Complete!"}
           </h2>
           <p className="mt-2 text-white/90 text-base font-medium">
@@ -161,8 +163,7 @@ export default function RegisterPage() {
               >
                 <option value="user">Student</option>
                 <option value="teacher">Teacher</option>
-                <option value="admin">Administrator</option>
-              </select>
+               </select>
             </div>
 
             {form.role === "teacher" && (
@@ -246,22 +247,10 @@ export default function RegisterPage() {
           </div>
         )}
         </form>
+        </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-6 relative z-10">
-        <div className="mx-auto max-w-6xl px-6 text-center">
-          <div className="mb-3">
-            <h3 className="text-lg font-semibold text-white mb-2">CUTM Result Portal</h3>
-            <p className="text-white/80 text-sm max-w-2xl mx-auto">
-              Empowering students with transparent, secure, and instant access to their academic achievements through innovative technology.
-            </p>
-          </div>
-          <div className="text-white/70 text-xs">
-            © {new Date().getFullYear()} CUTM Result Portal. All rights reserved. | Crafted with excellence for academic success.
-          </div>
-        </div>
-      </footer>
+       
     </div>
   );
 }

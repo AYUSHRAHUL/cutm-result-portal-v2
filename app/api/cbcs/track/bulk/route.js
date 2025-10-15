@@ -106,8 +106,8 @@ export async function POST(req) {
     // Build query for students with proper filtering
     let query = {};
     
-    // Apply department filter using registration number pattern
-    if (department && department !== "All" && department !== "Select Department") {
+    // FIXED: Apply department filter using registration number pattern
+    if (department && department !== "All" && department !== "Select Department" && department !== "") {
       // Map department names to department codes (8th character in registration)
       const deptMap = {
         'Civil Engineering': '1',
@@ -125,13 +125,13 @@ export async function POST(req) {
       } else {
         console.log(`Department not found in map: ${department}`);
       }
-    } else if (registration === "all" && (!department || department === "All" || department === "Select Department")) {
+    } else if (registration === "all" && (!department || department === "All" || department === "Select Department" || department === "")) {
       // If registration is "all" and no specific department, get all students
       console.log("No department filter applied - getting all students");
     }
     
-    // Apply batch filter
-    if (batch && batch !== "All") {
+    // FIXED: Apply batch filter
+    if (batch && batch !== "All" && batch !== "") {
       // Combine batch and department filters
       if (query.Reg_No && query.Reg_No.$regex) {
         // If department filter is already applied, combine with batch
@@ -205,9 +205,13 @@ export async function POST(req) {
     // Build results query - no need for department filter since we already filtered students
     const resultQuery = { Reg_No: { $in: regNumbers } };
     
+    // FIXED: Apply semester filter
     const semVals = (Array.isArray(semesters) ? semesters : []).filter(Boolean);
     if (semVals.length > 0 && !semVals.includes("All")) {
       resultQuery.Sem = { $in: semVals };
+      console.log(`Applied semester filter: ${semVals.join(', ')}`);
+    } else {
+      console.log("No semester filter applied - getting all semesters");
     }
 
     // Get all results for these students
@@ -305,10 +309,13 @@ export async function POST(req) {
       const totalRequired = Object.values(basketProgress).reduce((s, b) => s + (Number(b.required_credits) || 0), 0) || 160;
       const percentage = totalRequired > 0 ? Math.min(100, Math.round((totalEarned / totalRequired) * 100)) : 0;
 
-      // Filter to specific basket if requested
+      // FIXED: Filter to specific basket if requested
       let filteredProgress = basketProgress;
-      if (basket && basket !== "All" && basketProgress[basket]) {
+      if (basket && basket !== "All" && basket !== "" && basketProgress[basket]) {
         filteredProgress = { [basket]: basketProgress[basket] };
+        console.log(`Applied basket filter: ${basket}`);
+      } else {
+        console.log("No basket filter applied - showing all baskets");
       }
 
       // Build student data
@@ -325,9 +332,9 @@ export async function POST(req) {
         basketIII: (basketProgress["Basket III"]?.earned_credits || 0) + (basketProgress["Basket III"]?.failed_credits || 0),
         basketIV: (basketProgress["Basket IV"]?.earned_credits || 0) + (basketProgress["Basket IV"]?.failed_credits || 0),
         basketV: (basketProgress["Basket V"]?.earned_credits || 0) + (basketProgress["Basket V"]?.failed_credits || 0),
-        // For specific basket view
-        basketCredits: basket && basket !== "All" ? (basketProgress[basket]?.earned_credits || 0) : 0,
-        basketStatus: basket && basket !== "All" ? (basketProgress[basket]?.status || "Not Started") : "N/A"
+        // FIXED: For specific basket view
+        basketCredits: basket && basket !== "All" && basket !== "" ? (basketProgress[basket]?.earned_credits || 0) : 0,
+        basketStatus: basket && basket !== "All" && basket !== "" ? (basketProgress[basket]?.status || "Not Started") : "N/A"
       };
 
       studentsData.push(studentData);

@@ -298,7 +298,7 @@ export default function UserDashboard() {
           <div className="main-spinner">
             <img 
               className="spinner-logo" 
-              src="https://github.com/AYUSHRAHUL/cutm-result-portal/blob/main/templates/spinner.jpg?raw=true"  
+              src="/spinner.jpg"  
               alt="CUTM Logo Loading" 
             />
             </div>
@@ -795,7 +795,7 @@ export default function UserDashboard() {
       </div>
 
       {/* Hero Section */}
-      <section style={{padding: '120px 0 80px', textAlign: 'center', position: 'relative', overflow: 'hidden'}}>
+      <section style={{padding: '40px 0 10px', textAlign: 'center', position: 'relative', overflow: 'hidden'}}>
         <div className="container mx-auto px-6">
           <div style={{animation: 'heroFadeInUp 1.2s ease-out'}}>
             <h1 style={{
@@ -823,6 +823,8 @@ export default function UserDashboard() {
             </div>
             </div>
       </section>
+
+      
 
       {/* Main Form Section */}
       <section style={{padding: '60px 0', position: 'relative', zIndex: 10}}>

@@ -46,10 +46,13 @@ export async function POST(req) {
       type: 'password-reset'
     });
 
-    // Generate institutional email (registration number + @cutm.ac.in)
-    const institutionalEmail = `${user.registration || user.name}@cutm.ac.in`;
+    // Generate institutional email ONLY if a valid numeric registration exists
+    let institutionalEmail = null;
+    if (user && user.registration && /^\d{6,}$/.test(String(user.registration))) {
+      institutionalEmail = `${user.registration}@cutm.ac.in`;
+    }
 
-    // Send OTP to both emails
+    // Send OTP to provided email and institutional (if valid)
     const emailsToSend = [email, institutionalEmail].filter(Boolean);
     const emailResults = await sendOTPToMultipleEmails(emailsToSend, otp, 'password-reset');
 

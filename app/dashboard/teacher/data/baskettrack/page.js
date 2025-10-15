@@ -7,6 +7,8 @@ export default function TeacherBasketProgressTracker() {
   const [department, setDepartment] = useState("");
   const [batch, setBatch] = useState("");
   const [registration, setRegistration] = useState("");
+  const [registrationOptions, setRegistrationOptions] = useState([]);
+  const [loadingRegistrations, setLoadingRegistrations] = useState(false);
   const [semesters, setSemesters] = useState([]);
   const [semesterValues, setSemesterValues] = useState([]);
   const [basket, setBasket] = useState("");
@@ -75,14 +77,16 @@ export default function TeacherBasketProgressTracker() {
           // valid
         }
         
-        // Bulk search for all students in department
+        // FIXED: Enhanced request body with proper filtering
         const requestBody = { 
           registration: "all",
-          department, 
-          batch: batch || "All",
-          semesters: semesterValues.length > 0 ? semesterValues : ["All"], 
-          basket: basket || "All"
+          department: department === "All" ? "" : department, // Send empty string for "All" departments
+          batch: batch && batch !== "All" ? batch : "", // Send empty string for "All" batches
+          semesters: semesterValues.length > 0 && !semesterValues.includes("All") ? semesterValues : [], // Send empty array for "All" semesters
+          basket: basket && basket !== "All" ? basket : "" // Send empty string for "All" baskets
         };
+        
+        console.log("Teacher bulk search request:", requestBody);
         
         const res = await fetch("/api/cbcs/track/bulk", {
           method: "POST",
@@ -131,14 +135,16 @@ export default function TeacherBasketProgressTracker() {
           throw new Error("Please select a valid department or leave it empty");
         }
         
-        // Individual student search
+        // FIXED: Individual student search with proper filtering
         const requestBody = {
-          department: department || "",
-          batch: batch || "", 
-          registration: registration.trim(), 
-          semesters: semesterValues.length > 0 ? semesterValues : ["All"], 
-          basket: basket || "All"
+          department: department && department !== "All" ? department : "", 
+          batch: batch && batch !== "All" ? batch : "", 
+          registration: registration.trim().toUpperCase(), 
+          semesters: semesterValues.length > 0 && !semesterValues.includes("All") ? semesterValues : [], 
+          basket: basket && basket !== "All" ? basket : ""
         };
+        
+        console.log("Teacher individual search request:", requestBody);
         
         const res = await fetch("/api/cbcs/track", {
           method: "POST",
@@ -214,6 +220,61 @@ export default function TeacherBasketProgressTracker() {
       setSemesterValues([]);
     }
   }, [registration]);
+
+  // Load registration list when department and batch are selected (mirror admin)
+  useEffect(() => {
+    async function loadRegistrations() {
+      try {
+        setLoadingRegistrations(true);
+        setError("");
+        setRegistrationOptions([]);
+        const branchMap = {
+          "Civil Engineering": "Civil",
+          "Computer Science Engineering": "CSE",
+          "Electronics & Communication Engineering": "ECE",
+          "Electrical & Electronics Engineering": "EEE",
+          "Mechanical Engineering": "Mechanical",
+        };
+        const branch = department && department !== "All" ? branchMap[department] : undefined;
+        const hasBatch = batch && batch !== "All";
+        const body = { ...(branch ? { branch } : {}), ...(hasBatch ? { batch } : {}) };
+        const res = await fetch("/api/batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load registrations");
+        const records = data.records || [];
+        const seen = new Set();
+        const options = [];
+        for (const r of records) {
+          const reg = r.Reg_No;
+          if (!reg || seen.has(reg)) continue;
+          seen.add(reg);
+          options.push({ value: reg, label: `${reg}${r.Name ? ` - ${r.Name}` : ''}` });
+        }
+        options.sort((a, b) => a.value.localeCompare(b.value));
+        setRegistrationOptions(options);
+      } catch (err) {
+        setRegistrationOptions([]);
+        setError(prev => prev || err.message);
+      } finally {
+        setLoadingRegistrations(false);
+      }
+    }
+
+    // Clear dependent states when filters change
+    setRegistration("");
+    setSemesters([]);
+    setSemesterValues([]);
+
+    if (department && department !== "" && department !== "All" && batch && batch !== "" && batch !== "All") {
+      loadRegistrations();
+    } else {
+      setRegistrationOptions([]);
+    }
+  }, [department, batch]);
 
   // Stats calculation
   const overallStats = useMemo(() => {
@@ -490,36 +551,41 @@ export default function TeacherBasketProgressTracker() {
                 </select>
               </div>
 
-              {/* Registration No */}
+            {/* Registration No */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Registration No:</label>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Registration No:</label>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-2">
                   <select 
-                    value={registration === "all" ? "all" : ""} 
+                    value={registration === "all" ? "all" : registration}
                     onChange={e => {
-                      if (e.target.value === "all") {
-                        setRegistration("all");
-                      } else {
-                        setRegistration("");
-                      }
+                      const val = e.target.value;
+                      setRegistration(val);
                     }} 
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   >
-                    <option value="">Select Option</option>
+                    <option value="">Select Registration</option>
                     <option value="all">All Students</option>
+                    {registrationOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
+                  {loadingRegistrations && (
+                    <div className="text-xs text-gray-500">Loading registrations...</div>
+                  )}
                   <input 
                     type="text"
                     value={registration !== "all" ? registration : ""} 
                     onChange={e => setRegistration(e.target.value)} 
-                    placeholder="Or enter specific registration number"
+                    placeholder="Or type registration manually"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   />
                 </div>
-                <div className="text-xs text-gray-500">
-                  💡 Select "All Students" or enter specific registration number
-                </div>
               </div>
+              <div className="text-xs text-gray-500">
+                💡 Select "All Students" or enter specific registration number
+              </div>
+            </div>
 
               {/* Semester */}
               <div className="space-y-2">
@@ -537,7 +603,7 @@ export default function TeacherBasketProgressTracker() {
                 {loadingSemesters && <div className="text-xs text-gray-500">Loading semesters...</div>}
               </div>
 
-              {/* Basket */}
+              {/* FIXED: Basket */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Basket:</label>
                 <select 
@@ -547,8 +613,15 @@ export default function TeacherBasketProgressTracker() {
                 >
                   <option value="">Select Basket</option>
                   <option value="All">All Baskets</option>
-                  {["Basket I","Basket II","Basket III","Basket IV","Basket V"].map(b => <option key={b} value={b}>{b}</option>)}
+                  <option value="Basket I">Basket I (17 credits)</option>
+                  <option value="Basket II">Basket II (12 credits)</option>
+                  <option value="Basket III">Basket III (25 credits)</option>
+                  <option value="Basket IV">Basket IV (58 credits)</option>
+                  <option value="Basket V">Basket V (48 credits)</option>
                 </select>
+                <div className="text-xs text-gray-500">
+                  💡 Filter results by specific basket or view all baskets
+                </div>
               </div>
             </div>
 
@@ -607,16 +680,59 @@ export default function TeacherBasketProgressTracker() {
           </div>
         )}
 
-        {/* Debug Information (temporary) */}
+        {/* FIXED: Search Status Information */}
         {searchPerformed && !loading && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
-            <div className="text-yellow-800 text-sm">
-              <strong>Debug Info:</strong><br/>
-              Search Performed: {searchPerformed ? 'Yes' : 'No'}<br/>
-              Registration: {registration}<br/>
-              Student Data: {studentData ? 'Available' : 'None'}<br/>
-              All Students Data: {allStudentsData.length} records<br/>
-              Basket Progress: {Object.keys(basketProgress).length} baskets
+          <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
+            <div className="text-green-800 text-sm">
+              <strong>Search Completed:</strong><br/>
+              Department: {department || 'All'}<br/>
+              Batch: {batch || 'All'}<br/>
+              Basket: {basket || 'All'}<br/>
+              Results: {allStudentsData.length} students found<br/>
+              {allStudentsData.length > 0 && (
+                <span className="text-green-600">
+                  ✅ Use the table below to view detailed basket progress for each student
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* FIXED: Filtering Guide for Teachers */}
+        {searchPerformed && !loading && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+            <div className="text-blue-800 text-sm">
+              <strong>📋 Filtering Guide:</strong><br/>
+              • <strong>Registration Format:</strong> 2021001234 (10 digits)<br/>
+              • <strong>Department Codes:</strong> 1=Civil, 2=CSE, 3=ECE, 5=EEE, 6=Mechanical<br/>
+              • <strong>Batch:</strong> First 2 digits (20=2020, 21=2021, etc.)<br/>
+              • <strong>Basket Credits:</strong> I(17), II(12), III(25), IV(58), V(48)<br/>
+              • <strong>Click on basket numbers</strong> to view detailed subject breakdown
+            </div>
+          </div>
+        )}
+
+        {/* FIXED: No Results Message */}
+        {searchPerformed && !loading && registration === "all" && allStudentsData.length === 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-6 mb-6">
+            <div className="text-center">
+              <div className="text-yellow-600 text-4xl mb-4">🔍</div>
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">No Students Found</h3>
+              <p className="text-yellow-700 mb-4">
+                No students found matching your search criteria. Please try:
+              </p>
+              <ul className="text-yellow-700 text-sm text-left max-w-md mx-auto">
+                <li>• Selecting a different department</li>
+                <li>• Choosing a different batch</li>
+                <li>• Removing some filters to broaden your search</li>
+                <li>• Checking if the department has students in the database</li>
+              </ul>
+              <button 
+                onClick={clearFilters}
+                className="mt-4 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
+              >
+                Clear All Filters
+              </button>
             </div>
           </div>
         )}
@@ -733,6 +849,31 @@ export default function TeacherBasketProgressTracker() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* FIXED: No Individual Results Message */}
+        {searchPerformed && !loading && registration !== "all" && !studentData && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-6 mb-6">
+            <div className="text-center">
+              <div className="text-yellow-600 text-4xl mb-4">🔍</div>
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">No Student Data Found</h3>
+              <p className="text-yellow-700 mb-4">
+                No data found for registration number: <strong>{registration}</strong>
+              </p>
+              <ul className="text-yellow-700 text-sm text-left max-w-md mx-auto">
+                <li>• Verify the registration number is correct</li>
+                <li>• Check if the student exists in the database</li>
+                <li>• Try removing semester filters</li>
+                <li>• Contact administrator if the issue persists</li>
+              </ul>
+              <button 
+                onClick={clearFilters}
+                className="mt-4 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
+              >
+                Clear All Filters
+              </button>
             </div>
           </div>
         )}

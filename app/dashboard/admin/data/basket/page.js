@@ -30,7 +30,7 @@ export default function AdminCBCSBasketPage() {
   const baskets = useMemo(() => Array.from(new Set(items.map(i => i.Basket).filter(Boolean))).sort(), [items]);
 
   async function fetchItems() {
-    setError(""); setSuccess("");
+    setError("");
     try {
       setLoading(true);
       const qs = new URLSearchParams({ branch, basket, search, limit: "0" }).toString();
@@ -116,10 +116,17 @@ export default function AdminCBCSBasketPage() {
     if (!editModal.item) return;
     try {
       setLoading(true);
+      const payload = {
+        Branch: (editForm.Branch || '').trim(),
+        Basket: (editForm.Basket || '').trim(),
+        SubjectCode: (editForm.SubjectCode || '').trim(),
+        SubjectName: (editForm.SubjectName || '').trim(),
+        Credits: (editForm.Credits ?? '').toString().trim(),
+      };
       const res = await fetch(`/api/cbcs/${editModal.item._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Update failed");
@@ -148,10 +155,17 @@ export default function AdminCBCSBasketPage() {
   async function saveManualSubject() {
     try {
       setLoading(true);
+      const payload = {
+        Branch: (addForm.Branch || '').trim(),
+        Basket: (addForm.Basket || '').trim(),
+        SubjectCode: (addForm.SubjectCode || '').trim(),
+        SubjectName: (addForm.SubjectName || '').trim(),
+        Credits: (addForm.Credits ?? '').toString().trim(),
+      };
       const res = await fetch("/api/cbcs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addForm)
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to add subject");
@@ -231,7 +245,7 @@ export default function AdminCBCSBasketPage() {
         {/* Stats */}
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="stat-card"><div className="stat-number">{totalSubjects}</div><div className="stat-label">Total Subjects</div></div>
-          <div className="stat-card"><div className="stat-number">{branches.length}</div><div className="stat-label">Branches</div></div>
+          <div className="stat-card"><div className="stat-number">{5}</div><div className="stat-label">Branches</div></div>
           <div className="stat-card"><div className="stat-number">{baskets.length}</div><div className="stat-label">Baskets</div></div>
         </div>
 

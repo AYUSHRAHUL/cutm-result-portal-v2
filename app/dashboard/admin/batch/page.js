@@ -37,7 +37,10 @@ export default function AdminBatchPage() {
     if (rows.length === 0) return;
     const keys = ["Reg_No","Name","Sem","Subject_Code","Subject_Name","Credits","Grade"];
     const csv = [keys.join(",")]
-      .concat(rows.map(r => keys.map(k => escapeCsv(r[k] ?? "")).join(",")))
+      .concat(rows.map(r => {
+        const record = { ...r, Credits: computeCreditsSum(r.Credits) };
+        return keys.map(k => escapeCsv(record[k] ?? "")).join(",");
+      }))
       .join("\n");
     downloadBlob(csv, `batch_${branch || "all"}_${batch || "all"}.csv`, "text/csv;charset=utf-8;");
   }
@@ -45,7 +48,7 @@ export default function AdminBatchPage() {
   function exportExcel() {
     if (rows.length === 0) return;
     const header = ["Reg No","Name","Semester","Subject Code","Subject Name","Credits","Grade"];
-    const table = [header].concat(rows.map(r => [r.Reg_No,r.Name,r.Sem,r.Subject_Code,r.Subject_Name,r.Credits,r.Grade]));
+    const table = [header].concat(rows.map(r => [r.Reg_No,r.Name,r.Sem,r.Subject_Code,r.Subject_Name,computeCreditsSum(r.Credits),r.Grade]));
     // Simple HTML table Excel-compatible
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><table>${table.map(row => `<tr>${row.map(c => `<td>${String(c ?? "").toString().replace(/&/g,'&amp;').replace(/</g,'&lt;')}</td>`).join("")}</tr>`).join("")}</table></body></html>`;
     downloadBlob(html, `batch_${branch || "all"}_${batch || "all"}.xls`, "application/vnd.ms-excel");
@@ -56,7 +59,7 @@ export default function AdminBatchPage() {
     // Lightweight PDF via print dialog
     const w = window.open("", "_blank");
     if (!w) return;
-    const rowsHtml = rows.map(r => `<tr><td>${r.Reg_No}</td><td>${r.Name}</td><td>${r.Sem}</td><td>${r.Subject_Code}</td><td>${r.Subject_Name}</td><td>${r.Credits}</td><td>${r.Grade}</td></tr>`).join("");
+    const rowsHtml = rows.map(r => `<tr><td>${r.Reg_No}</td><td>${r.Name}</td><td>${r.Sem}</td><td>${r.Subject_Code}</td><td>${r.Subject_Name}</td><td>${computeCreditsSum(r.Credits)}</td><td>${r.Grade}</td></tr>`).join("");
     w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Batch Export</title><style>table{width:100%;border-collapse:collapse}td,th{border:1px solid #000;padding:6px;text-align:left}th{background:#eee}</style></head><body><h2>Batch Data</h2><p>Generated: ${new Date().toLocaleString()}</p><table><thead><tr><th>Reg No</th><th>Name</th><th>Sem</th><th>Subject Code</th><th>Subject Name</th><th>Credits</th><th>Grade</th></tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`);
     w.document.close();
     w.focus();
@@ -131,7 +134,7 @@ export default function AdminBatchPage() {
                           <td className="px-3 py-2">{r.Sem}</td>
                           <td className="px-3 py-2"><code>{r.Subject_Code}</code></td>
                           <td className="px-3 py-2">{r.Subject_Name}</td>
-                          <td className="px-3 py-2 text-center">{r.Credits}</td>
+                          <td className="px-3 py-2 text-center">{computeCreditsSum(r.Credits)}</td>
                           <td className="px-3 py-2 text-center">{r.Grade}</td>
                         </tr>
                       ))}
@@ -159,6 +162,18 @@ function aggregate(list, keyFn) {
     map[k] = (map[k] || 0) + 1;
   }
   return map;
+}
+
+function computeCreditsSum(credits) {
+  if (credits === null || credits === undefined) return "";
+  const s = String(credits).trim();
+  if (s === "") return "";
+  // If already a number-like string
+  if (/^\d+(\.\d+)?$/.test(s)) return s;
+  // Split by + or whitespace, sum numeric parts
+  const parts = s.split(/[+\s]+/).map(p => p.trim()).filter(Boolean);
+  const sum = parts.reduce((acc, p) => acc + (parseFloat(p) || 0), 0);
+  return Number.isFinite(sum) ? String(sum) : s;
 }
 
 function shortBranch(branch) {

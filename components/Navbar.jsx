@@ -1,13 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isDashboard = typeof pathname === "string" && pathname.startsWith("/dashboard");
+
+  const roleLower = String(user?.role || "user").toLowerCase();
+  const isUserPanel = isDashboard && (roleLower === "user" || roleLower === "student");
+  const isActive = (path) => typeof pathname === "string" && pathname.startsWith(path);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -22,6 +28,10 @@ export default function Navbar() {
       }
     };
     fetchUser();
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   // Close dropdown when clicking outside
@@ -44,15 +54,64 @@ export default function Navbar() {
     }
   };
 
+  if (!mounted) {
+    return (
+      <nav className="bg-blue-900 text-white flex justify-between items-center px-4 sm:px-6 py-3 min-h-[60px] relative z-50">
+        <button 
+          className="font-bold text-lg sm:text-xl flex items-center gap-2 sm:gap-3 flex-shrink-0" 
+          onClick={() => router.push("/")}
+          aria-label="CUTM Portal Home"
+        >
+          <Image src="/spinner.jpg" alt="CUTM Logo" width={40} height={40} className="rounded-full shadow-sm" priority />
+          <span>CUTM Portal</span>
+        </button>
+        <div />
+      </nav>
+    );
+  }
+
   return (
-    <nav className="bg-blue-600 text-white flex justify-between items-center px-4 sm:px-6 py-3 min-h-[60px] relative z-50">
+    <nav className="bg-blue-900 text-white flex justify-between items-center px-4 sm:px-6 py-3 min-h-[60px] relative z-50">
       <button 
-        className="font-bold text-lg sm:text-xl flex-shrink-0" 
+        className="font-bold text-lg sm:text-xl flex items-center gap-2 sm:gap-3 flex-shrink-0" 
         onClick={() => router.push("/")}
+        aria-label="CUTM Portal Home"
       >
-        CUTM Portal
+        <Image src="/spinner.jpg" alt="CUTM Logo" width={40} height={40} className="rounded-full shadow-sm" priority />
+        <span>CUTM Portal</span>
       </button>
-      
+
+      {/* User Panel quick links */}
+      {isUserPanel && (
+        <div className="hidden md:flex items-center gap-1 lg:gap-2 mx-2 overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => router.push("/dashboard/user")}
+            className={`px-2.5 py-1.5 rounded text-xs lg:text-sm whitespace-nowrap transition-colors ${
+              isActive("/dashboard/user") && !isActive("/dashboard/user/")
+                ? "bg-white text-blue-700"
+                : "bg-white/10 hover:bg-white/15 text-white"
+            }`}
+            title="View Results"
+          >📊 Results</button>
+
+          <button
+            onClick={() => router.push("/dashboard/user/basket-track")}
+            className={`px-2.5 py-1.5 rounded text-xs lg:text-sm whitespace-nowrap transition-colors ${
+              isActive("/dashboard/user/basket-track") ? "bg-white text-blue-700" : "bg-white/10 hover:bg-white/15 text-white"
+            }`}
+            title="Basket Track"
+          >📋 Basket</button>
+
+          <button
+            onClick={() => router.push("/dashboard/user/backlog-track")}
+            className={`px-2.5 py-1.5 rounded text-xs lg:text-sm whitespace-nowrap transition-colors ${
+              isActive("/dashboard/user/backlog-track") ? "bg-white text-blue-700" : "bg-white/10 hover:bg-white/15 text-white"
+            }`}
+            title="Backlog Track"
+          >⚠️ Backlogs</button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
         {user && (
           <div className="relative">
@@ -65,7 +124,11 @@ export default function Navbar() {
               <span className="opacity-80 text-xs sm:text-sm">▾</span>
             </button>
             {open && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md bg-white text-gray-900 shadow-lg overflow-hidden z-50 border border-gray-200">
+              <div className="absolute right-0 mt-2 w-56 rounded-md bg-white text-gray-900 shadow-lg overflow-hidden z-50 border border-gray-200">
+                <div className="px-4 py-3 border-b">
+                  <div className="text-sm font-medium text-gray-900">{user?.name || 'User'}</div>
+                  <div className="text-xs text-gray-600 truncate max-w-[12rem]">{user?.email || ''}</div>
+                </div>
                 <button
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 transition-colors"
                   onClick={() => {
@@ -93,17 +156,14 @@ export default function Navbar() {
                     router.push(target);
                   }}
                 >My Dashboard</button>
+                <div className="border-t" />
+                <button
+                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  onClick={logout}
+                >Logout</button>
               </div>
             )}
           </div>
-        )}
-        {isDashboard && (
-          <button 
-            onClick={logout} 
-            className="bg-white text-blue-600 px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm font-medium hover:bg-gray-100 transition-colors whitespace-nowrap"
-          >
-            Logout
-          </button>
         )}
       </div>
     </nav>

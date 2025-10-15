@@ -71,6 +71,9 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 401 });
     }
 
+    // FIXED: Extract request data first
+    const { department, batch, registration, semesters = [], basket } = await req.json();
+    
     // Get user role for access control
     const userRole = payload.role?.toLowerCase();
     
@@ -94,8 +97,6 @@ export async function POST(req) {
         error: "Access denied - Invalid user role" 
       }, { status: 403 });
     }
-
-    const { department, batch, registration, semesters = [], basket } = await req.json();
     const reg = String(registration || "").toUpperCase().trim();
     if (!reg) return NextResponse.json({ error: "Registration is required" }, { status: 400 });
 
@@ -108,7 +109,24 @@ export async function POST(req) {
       .findOne({ Reg_No: reg }, { projection: { _id: 0, Name: 1, Reg_No: 1, Branch: 1 } });
     
     if (!studentInfo) {
-      return NextResponse.json({ error: "Student not found with this registration number" }, { status: 404 });
+      // FIXED: Enhanced error message with debugging info
+      console.log(`Student not found: ${reg}`);
+      
+      // Check if there are similar registration numbers
+      const similarRegs = await db
+        .collection("CUTM1")
+        .find({ Reg_No: { $regex: `^${reg.slice(0, 6)}` } })
+        .project({ _id: 0, Reg_No: 1, Name: 1 })
+        .limit(5)
+        .toArray();
+      
+      const suggestions = similarRegs.length > 0 
+        ? ` Similar registrations found: ${similarRegs.map(r => r.Reg_No).join(', ')}`
+        : '';
+      
+      return NextResponse.json({ 
+        error: `Student not found with registration number: ${reg}.${suggestions} Please verify the registration number.` 
+      }, { status: 404 });
     }
 
     // Extract batch from registration (first 2 digits)
@@ -140,22 +158,49 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    // Load all results for the registration, optionally filtered by semesters
+    // FIXED: Load all results for the registration, optionally filtered by semesters
     const resultQuery = { Reg_No: reg };
     const semVals = (Array.isArray(semesters) ? semesters : []).filter(Boolean);
     if (semVals.length > 0 && !semVals.includes("All")) {
       resultQuery.Sem = { $in: semVals };
+      console.log(`Applied semester filter for ${reg}: ${semVals.join(', ')}`);
+    } else {
+      console.log(`No semester filter applied for ${reg} - getting all semesters`);
     }
+    
+    console.log(`Querying results for ${reg} with query:`, JSON.stringify(resultQuery));
+    
     const results = await db
       .collection("CUTM1")
       .find(resultQuery)
       .project({ _id: 0, Reg_No: 1, Name: 1, Subject_Code: 1, Subject_Name: 1, Credits: 1, Grade: 1, Sem: 1 })
       .toArray();
+    
+    console.log(`Found ${results.length} result records for ${reg}`);
 
     if (results.length === 0) {
-      return NextResponse.json({ 
-        error: `No academic records found for registration ${reg}. Please verify the registration number and semester selection.` 
-      }, { status: 404 });
+      // FIXED: Enhanced error message with debugging info
+      console.log(`No academic records found for ${reg}`);
+      
+      // Check if student exists but has no results
+      const studentExists = await db
+        .collection("CUTM1")
+        .findOne({ Reg_No: reg }, { projection: { _id: 0, Reg_No: 1, Name: 1 } });
+      
+      if (studentExists) {
+        return NextResponse.json({ 
+          error: `Student ${studentExists.Name} (${reg}) found but has no academic records. This could mean:
+          1. No results have been uploaded for this student
+          2. The semester filter is too restrictive
+          3. Results are stored under a different registration format
+          
+          Try removing semester filters or contact the administrator.` 
+        }, { status: 404 });
+      } else {
+        return NextResponse.json({ 
+          error: `No academic records found for registration ${reg}. Please verify the registration number.` 
+        }, { status: 404 });
+      }
     }
 
     // Build list of subject codes for all attempts (completed or failed)
@@ -212,6 +257,7 @@ export async function POST(req) {
         code,
         name: r.Subject_Name || "",
         credits,
+        grade,
         completed: !isFailed,
         failed: isFailed,
         semester: r.Sem || "",

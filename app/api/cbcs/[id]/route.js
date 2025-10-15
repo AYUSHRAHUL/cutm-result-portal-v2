@@ -9,11 +9,11 @@ export async function PUT(req, { params }) {
     const client = await clientPromise;
     const db = client.db("cutm1");
     const set = {};
-    if (typeof updates.Branch === "string") set["Branch"] = updates.Branch;
-    if (typeof updates.Basket === "string") set["Basket"] = updates.Basket;
+    if (typeof updates.Branch === "string") set["Branch"] = updates.Branch.trim();
+    if (typeof updates.Basket === "string") set["Basket"] = updates.Basket.trim();
     if (typeof updates.SubjectCode === "string") set["Subject Code"] = updates.SubjectCode.trim().toUpperCase();
-    if (typeof updates.SubjectName === "string") set["Subject_name"] = updates.SubjectName;
-    if (typeof updates.Credits === "string") set["Credits"] = updates.Credits;
+    if (typeof updates.SubjectName === "string") set["Subject_name"] = updates.SubjectName.trim();
+    if (updates.Credits !== undefined) set["Credits"] = String(updates.Credits).trim();
     const res = await db.collection("cbcs").findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: set },

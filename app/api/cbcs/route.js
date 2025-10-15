@@ -58,21 +58,23 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { Branch, Basket, SubjectCode, SubjectName, Credits } = body;
+    const Branch = typeof body.Branch === 'string' ? body.Branch.trim() : '';
+    const Basket = typeof body.Basket === 'string' ? body.Basket.trim() : '';
+    const SubjectCode = typeof body.SubjectCode === 'string' ? body.SubjectCode.trim().toUpperCase() : '';
+    const SubjectName = typeof body.SubjectName === 'string' ? body.SubjectName.trim() : '';
+    const CreditsRaw = body.Credits;
     if (!Branch || !SubjectCode || !SubjectName) {
       return NextResponse.json({ error: "Branch, SubjectCode, SubjectName required" }, { status: 400 });
     }
-    const doc = {
-      Branch,
-      Basket: Basket || "",
-      "Subject Code": SubjectCode.trim().toUpperCase(),
-      Subject_name: SubjectName,
-      Credits: Credits || "",
-    };
+    const Credits = CreditsRaw === undefined || CreditsRaw === null || CreditsRaw === ''
+      ? ''
+      : String(CreditsRaw).trim();
+    const doc = { Branch, Basket, "Subject Code": SubjectCode, Subject_name: SubjectName, Credits };
     const client = await clientPromise;
     const db = client.db("cutm1");
-    await db.collection("cbcs").insertOne(doc);
-    return NextResponse.json({ success: true });
+    const res = await db.collection("cbcs").insertOne(doc);
+    const item = await db.collection("cbcs").findOne({ _id: res.insertedId });
+    return NextResponse.json({ success: true, item });
   } catch (err) {
     console.error("CBCS POST error", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

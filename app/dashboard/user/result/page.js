@@ -14,6 +14,20 @@ function ResultPageContent() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const parseCredits = (value) => {
+    if (value == null) return 0;
+    const str = String(value).trim();
+    if (!str) return 0;
+    const parts = str.split(/[+\-]/).map((p) => Number(p.trim()) || 0);
+    const ops = str.match(/[+\-]/g) || [];
+    if (ops.length === 0) return parts[0] || 0;
+    let total = parts[0] || 0;
+    for (let i = 0; i < ops.length; i++) {
+      total = ops[i] === '-' ? total - (parts[i + 1] || 0) : total + (parts[i + 1] || 0);
+    }
+    return total;
+  };
+
   useEffect(() => {
     const fetchResult = async () => {
       try {
@@ -103,7 +117,7 @@ function ResultPageContent() {
                 <tr key={i} className="hover:bg-gray-50 transition">
                   <td className="border p-2 text-center">{s.Subject_Code}</td>
                   <td className="border p-2">{s.Subject_Name}</td>
-                  <td className="border p-2 text-center">{s.Credits}</td>
+                  <td className="border p-2 text-center">{parseCredits(s.Credits)}</td>
                   <td
                     className={`border p-2 text-center font-bold ${
                       ["O", "E", "A"].includes(s.Grade)
@@ -118,6 +132,17 @@ function ResultPageContent() {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr className="bg-gray-50 font-semibold">
+                <td className="border p-2 text-right" colSpan={2}>Total</td>
+                <td className="border p-2 text-center">
+                  {Array.isArray(result?.subjects)
+                    ? result.subjects.reduce((sum, s) => sum + parseCredits(s?.Credits), 0)
+                    : 0}
+                </td>
+                <td className="border p-2 text-center">—</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 

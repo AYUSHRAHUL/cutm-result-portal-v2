@@ -25,7 +25,7 @@ export default function AdminRecordsPage() {
     const isCUTM = /^[0-9]{2}CUTM[0-9]{10}$/.test(reg);
     const isPlain = /^[A-Z0-9\-]{6,20}$/.test(reg); // lenient plain format (alnum/hyphen)
     if (!isCUTM && !isPlain) {
-      setError("Invalid registration. Enter CUTM format (21CUTMXXXXXXXXXX) or plain Reg No.");
+      setError("Invalid registration. Enter CUTM format (21CUTMXXXXXXXXXX)  .");
       return;
     }
     
@@ -128,7 +128,7 @@ export default function AdminRecordsPage() {
             <input
               name="registration"
               className="rounded-xl border border-white/15 bg-white/90 px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-400 text-gray-900"
-              placeholder="Enter registration number (CUTM or plain)"
+              placeholder="Enter registration number  "
               value={registration}
               onChange={e => setRegistration(e.target.value.toUpperCase())}
               // allow longer IDs; server handles exact matching
@@ -143,14 +143,7 @@ export default function AdminRecordsPage() {
         {message && <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 px-4 py-3">✅ {message}</div>}
         {error && <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-200 px-4 py-3">⚠️ {error}</div>}
         
-        {/* Help Text */}
-        {!rows.length && !error && (
-          <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-200 px-4 py-3">
-            💡 <strong>Tip:</strong> You can enter either CUTM Reg (e.g., 21CUTM1234567890) or a plain registration number.
-            <br />
-            <small className="text-blue-300">💻 Press Ctrl+Enter to search quickly</small>
-          </div>
-        )}
+ 
 
         {/* Table */}
         {rows.length > 0 ? (
@@ -215,17 +208,7 @@ export default function AdminRecordsPage() {
             <h3 className="text-lg font-semibold mb-1">Search Student Academic Records</h3>
             <p className="text-white/70">Enter a registration number above to view and manage grades.</p>
           </div>
-        )}
-
-        {/* Quick actions */}
-        <div className="mt-6 rounded-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-5 text-center text-white/90">
-          <h4 className="font-semibold mb-3">⚙️ Quick Actions</h4>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Link href="/dashboard/admin/upload" className="px-4 py-2 rounded-full border border-white/15 hover:bg-white/10">Upload Data</Link>
-            <Link href="/dashboard/admin/backlog" className="px-4 py-2 rounded-full border border-white/15 hover:bg-white/10">View Backlogs</Link>
-            <Link href="/dashboard/admin" className="px-4 py-2 rounded-full border border-white/15 hover:bg-white/10">Admin Panel</Link>
-          </div>
-        </div>
+        )}  
       </div>
     </div>
   );
