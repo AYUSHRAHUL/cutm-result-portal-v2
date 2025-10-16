@@ -3,7 +3,7 @@
 
 
 :root {
-  --background: #ffffff;
+  --background: #171717;
   --foreground: #171717;
   /* Brand palette */
    /* primary */
@@ -26,7 +26,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #4e2cb6;
   }
 }
 
