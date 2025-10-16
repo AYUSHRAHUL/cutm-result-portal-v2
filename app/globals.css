@@ -1,20 +1,12 @@
 @import "tailwindcss";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+ 
 
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
   /* Brand palette */
-  --brand-blue-50: #eef2ff;
-  --brand-blue-100: #dbeafe;
-  --brand-blue-200: #bfdbfe;
-  --brand-blue-300: #93c5fd;
-  --brand-blue-400: #60a5fa;
-  --brand-blue-500: #3b82f6;
-  --brand-blue-600: #2563eb; /* primary */
+   /* primary */
   --brand-blue-700: #1d4ed8;
   --brand-blue-800: #1e40af;
   --brand-blue-900: #1e3a8a;
