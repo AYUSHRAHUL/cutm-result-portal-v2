@@ -258,7 +258,7 @@ export default function UserBacklogTrack() {
               </div>
 
               {/* Semester */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Semester:</label>
                 <select 
                   value={semesterValues.length > 0 ? semesterValues[0] : ""} 
@@ -271,7 +271,7 @@ export default function UserBacklogTrack() {
                   {semesters.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
                 {loadingSemesters && <div className="text-xs text-gray-500">Loading semesters...</div>}
-              </div>
+              </div> */}
             </div>
 
             {/* Submit and Clear Buttons */}
@@ -398,22 +398,7 @@ export default function UserBacklogTrack() {
                     <div className="text-sm text-red-700">Total Backlog Subjects</div>
                   </div>
                 </div>
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">
-                      {backlogData.reduce((sum, item) => sum + (item.Attempts || item.attempts || 1), 0)}
-                    </div>
-                    <div className="text-sm text-orange-700">Total Attempts</div>
-                  </div>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {backlogData.reduce((sum, item) => sum + (item.Credits || item.credits || 0), 0)}
-                    </div>
-                    <div className="text-sm text-blue-700">Total Credits</div>
-                  </div>
-                </div>
+               
               </div>
 
               {/* Backlog Subjects Table */}
@@ -424,18 +409,18 @@ export default function UserBacklogTrack() {
                       <th className="px-4 py-3 text-left font-semibold text-gray-900">Sl.No</th>
                       <th className="px-4 py-3 text-left font-semibold text-gray-900">Subject Code</th>
                       <th className="px-4 py-3 text-left font-semibold text-gray-900">Subject Name</th>
-                      <th className="px-4 py-3 text-center font-semibold text-gray-900">Credits</th>
+                      {/* <th className="px-4 py-3 text-center font-semibold text-gray-900">Credits</th> */}
                       <th className="px-4 py-3 text-center font-semibold text-gray-900">Semester</th>
                       <th className="px-4 py-3 text-center font-semibold text-gray-900">Grade</th>
-                      <th className="px-4 py-3 text-center font-semibold text-gray-900">Attempts</th>
-                      <th className="px-4 py-3 text-center font-semibold text-gray-900">Status</th>
+                      {/* <th className="px-4 py-3 text-center font-semibold text-gray-900">Attempts</th> */}
+                      {/* <th className="px-4 py-3 text-center font-semibold text-gray-900">Status</th> */}
                     </tr>
                   </thead>
                   <tbody>
                     {backlogData.map((backlog, index) => {
                       const grade = backlog.Grade || backlog.grade || 'F';
                       const attempts = backlog.Attempts || backlog.attempts || 1;
-                      const isFailed = ["F", "AB", "I"].includes(grade);
+                      const isFailed = ["F", "S", "I"].includes(grade);
                       
                       return (
                         <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
@@ -446,9 +431,9 @@ export default function UserBacklogTrack() {
                           <td className="px-4 py-3 text-gray-900">
                             {backlog.Subject_Name || backlog.subjectName || 'N/A'}
                           </td>
-                          <td className="px-4 py-3 text-center text-gray-900">
+                          {/* <td className="px-4 py-3 text-center text-gray-900">
                             {backlog.Credits || backlog.credits || 0}
-                          </td>
+                          </td> */}
                           <td className="px-4 py-3 text-center text-gray-900">
                             {backlog.Sem || backlog.semester || 'N/A'}
                           </td>
@@ -457,12 +442,12 @@ export default function UserBacklogTrack() {
                               {grade}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center text-gray-900">
+                          {/* <td className="px-4 py-3 text-center text-gray-900">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                               {attempts}
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
+                          </td> */}
+                          {/* <td className="px-4 py-3 text-center">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               isFailed 
                                 ? 'bg-red-100 text-red-800' 
@@ -470,7 +455,7 @@ export default function UserBacklogTrack() {
                             }`}>
                               {isFailed ? 'Failed' : 'Passed'}
                             </span>
-                          </td>
+                          </td> */}
                         </tr>
                       );
                     })}
@@ -482,7 +467,7 @@ export default function UserBacklogTrack() {
               <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-yellow-800 mb-2">📝 Important Notes:</h4>
                 <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• Failed subjects (F, AB, I grades) need to be cleared in subsequent semesters</li>
+                  <li>• Failed subjects (F, S, M grades) need to be cleared in subsequent semesters</li>
                   <li>• Contact your academic advisor for guidance on clearing backlogs</li>
                   <li>• Some subjects may have specific clearance requirements</li>
                   <li>• Keep track of your progress and plan your studies accordingly</li>
