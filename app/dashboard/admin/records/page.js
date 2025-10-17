@@ -166,7 +166,7 @@ export default function AdminRecordsPage() {
                       <td className="px-3 py-2"><span className="px-2 py-1 rounded-full text-xs bg-cyan-500/20 text-cyan-200">{r.Sem}</span></td>
                       <td className="px-3 py-2"><code className="text-indigo-200 bg-indigo-900/30 px-1.5 py-0.5 rounded">{r.Subject_Code}</code></td>
                       <td className="px-3 py-2 text-white/90">{r.Subject_Name}</td>
-                      <td className="px-3 py-2"><span className="px-2 py-1 rounded-full text-xs bg-white/20 text-white">{r.Credits}</span></td>
+                      <td className="px-3 py-2"><span className="px-2 py-1 rounded-full text-xs bg-white/20 text-white">{sumCredits(r.Credits)}</span></td>
                       <td className="px-3 py-2">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${badgeClass(r.Grade)}`}>{r.Grade}</span>
                       </td>

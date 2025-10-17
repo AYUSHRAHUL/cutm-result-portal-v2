@@ -23,6 +23,15 @@ const REQUIRED_CREDITS = {
   "Basket V": 48,
 };
 
+// Lateral entry students have different credit requirements
+const LATERAL_ENTRY_CREDITS = {
+  "Basket I": 6,
+  "Basket II": 9,
+  "Basket III": 25,
+  "Basket IV": 48,
+  "Basket V": 32,
+};
+
 function parseCredits(creditStr) {
   if (!creditStr) return 0;
   const parts = creditStr
@@ -46,6 +55,18 @@ function buildBasketState(required) {
     default_assigned_count: 0,
     subjects: [],
   };
+}
+
+// Function to check if a student is lateral entry
+function isLateralEntryStudent(registration) {
+  // Lateral entry students have "1" as the 9th character (0-indexed position 8)
+  // Example: 220101131056 (lateral) vs 220101130056 (normal)
+  return registration && registration.length >= 9 && registration.charAt(8) === '1';
+}
+
+// Function to get required credits based on student type
+function getRequiredCreditsForStudent(registration) {
+  return isLateralEntryStudent(registration) ? LATERAL_ENTRY_CREDITS : REQUIRED_CREDITS;
 }
 
 function recalcBasket(b) {
@@ -226,11 +247,15 @@ export async function POST(req) {
       });
     }
 
-    // Initialize baskets
-    const basketNames = Object.keys(REQUIRED_CREDITS);
+    // Initialize baskets with appropriate credit requirements
+    const requiredCredits = getRequiredCreditsForStudent(reg);
+    const basketNames = Object.keys(requiredCredits);
     const basketProgress = Object.fromEntries(
-      basketNames.map((name) => [name, buildBasketState(REQUIRED_CREDITS[name])])
+      basketNames.map((name) => [name, buildBasketState(requiredCredits[name])])
     );
+    
+    // Add lateral entry indicator to student info
+    const isLateralEntry = isLateralEntryStudent(reg);
 
     // Assign subjects to baskets. Earn credits only for completed attempts
     results.forEach((r) => {
@@ -288,13 +313,15 @@ export async function POST(req) {
     const totalEarned = Object.values(filteredProgress).reduce((s, b) => s + (Number(b.earned_credits) || 0), 0);
     const totalFailed = Object.values(filteredProgress).reduce((s, b) => s + (Number(b.failed_credits) || 0), 0);
     const totalCredits = totalEarned + totalFailed; // Include both earned and failed
-    const totalRequired = Object.values(filteredProgress).reduce((s, b) => s + (Number(b.required_credits) || 0), 0) || 160;
+    const totalRequired = Object.values(filteredProgress).reduce((s, b) => s + (Number(b.required_credits) || 0), 0) || (isLateralEntry ? 120 : 160);
     const percentage = totalRequired > 0 ? Math.min(100, Math.round((totalEarned / totalRequired) * 100)) : 0;
     const student = {
       name: studentInfo.Name || results[0]?.Name || `Student ${reg.slice(-4)}`,
       registration: reg,
       department: actualDepartment,
       actual_batch: actualBatch,
+      is_lateral_entry: isLateralEntry,
+      student_type: isLateralEntry ? "Lateral Entry" : "Regular",
       overall_stats: {
         overall_status: percentage >= 100 ? "Completed" : percentage === 0 ? "Not Started" : "In Progress",
         baskets_completed: Object.values(filteredProgress).filter((b) => b.is_completed).length,
@@ -302,6 +329,7 @@ export async function POST(req) {
         total_earned_credits: totalEarned,
         total_failed_credits: totalFailed,
         total_credits: totalCredits,
+        total_required_credits: totalRequired,
         percentage,
         default_assigned_subjects: Object.values(filteredProgress).reduce((s, b) => s + (Number(b.default_assigned_count) || 0), 0),
       },

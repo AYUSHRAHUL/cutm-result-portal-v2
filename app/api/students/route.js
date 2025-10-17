@@ -63,7 +63,7 @@ export async function POST(req) {
     }
     
     // If department is provided, return list of students in that department
-    if (department) {
+    if (department || batch) {
       console.log("Fetching students for department:", department, "batch:", batch);
       
       const client = await clientPromise;
@@ -79,9 +79,12 @@ export async function POST(req) {
       }
       
       if (batch && batch !== "All") {
-        // Add batch filter using Reg_No pattern
-        query.Reg_No = { ...query.Reg_No, $regex: `^${batch}` };
-        console.log("Query with batch filter:", query);
+        // Support both two-digit and four-digit year prefixes in Reg_No
+        const b = String(batch).trim();
+        const yy = b.length === 4 && b.startsWith("20") ? b.slice(2) : b.slice(-2);
+        const pattern = `^(?:${yy}|20${yy})`;
+        query.Reg_No = { ...query.Reg_No, $regex: pattern };
+        console.log("Query with batch filter (pattern):", pattern, query);
       }
       
       // Get distinct students with their basic info

@@ -13,18 +13,7 @@ export default function TeacherCBCSBasketPage() {
   const [basket, setBasket] = useState("");
   const [search, setSearch] = useState("");
 
-  const [selectedIds, setSelectedIds] = useState(new Set());
-  const [selectAll, setSelectAll] = useState(false);
-
-  // Edit modal state
-  const [editModal, setEditModal] = useState({ show: false, item: null });
-  const [editForm, setEditForm] = useState({ Branch: "", Basket: "", SubjectCode: "", SubjectName: "", Credits: "" });
-
-  // Add subject modal state
-  const [addModal, setAddModal] = useState({ show: false, mode: "manual" }); // "manual" or "upload"
-  const [addForm, setAddForm] = useState({ Branch: "", Basket: "", SubjectCode: "", SubjectName: "", Credits: "" });
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // Removed edit/add/delete functionality for teacher view-only access
 
   const branches = useMemo(() => Array.from(new Set(items.map(i => i.Branch).filter(Boolean))).sort(), [items]);
   const baskets = useMemo(() => Array.from(new Set(items.map(i => i.Basket).filter(Boolean))).sort(), [items]);
@@ -38,8 +27,6 @@ export default function TeacherCBCSBasketPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load");
       setItems(data.items || []);
-      setSelectedIds(new Set());
-      setSelectAll(false);
     } catch (err) {
       setError(err.message);
     } finally { setLoading(false); }
@@ -56,154 +43,7 @@ export default function TeacherCBCSBasketPage() {
     return () => clearTimeout(timeoutId);
   }, [search, branch, basket]);
 
-  function toggleSelectAll(checked) {
-    setSelectAll(checked);
-    if (checked) {
-      setSelectedIds(new Set(items.map(i => String(i._id))));
-    } else {
-      setSelectedIds(new Set());
-    }
-  }
-
-  function toggleSelect(id, checked) {
-    const next = new Set(selectedIds);
-    if (checked) next.add(String(id)); else next.delete(String(id));
-    setSelectedIds(next);
-    setSelectAll(next.size === items.length && items.length > 0);
-  }
-
-  async function removeOne(id) {
-    try {
-      const res = await fetch(`/api/cbcs/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Delete failed");
-      setSuccess("Deleted");
-      await fetchItems();
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  async function bulkDelete() {
-    if (selectedIds.size === 0) return;
-    try {
-      setLoading(true);
-      await Promise.all(Array.from(selectedIds).map(id => fetch(`/api/cbcs/${id}`, { method: "DELETE" })));
-      setSuccess(`Deleted ${selectedIds.size} item(s)`);
-      await fetchItems();
-    } catch (err) {
-      setError("Some deletions failed");
-    } finally { setLoading(false); }
-  }
-
-  function openEditModal(item) {
-    setEditForm({
-      Branch: item.Branch || "",
-      Basket: item.Basket || "",
-      SubjectCode: item["Subject Code"] || item.SubjectCode || "",
-      SubjectName: item.Subject_name || item.Subject_Name || "",
-      Credits: item.Credits || ""
-    });
-    setEditModal({ show: true, item });
-  }
-
-  function closeEditModal() {
-    setEditModal({ show: false, item: null });
-    setEditForm({ Branch: "", Basket: "", SubjectCode: "", SubjectName: "", Credits: "" });
-  }
-
-  async function saveEdit() {
-    if (!editModal.item) return;
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/cbcs/${editModal.item._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Update failed");
-      setSuccess("Subject updated successfully");
-      closeEditModal();
-      await fetchItems();
-    } catch (err) {
-      setError(err.message);
-    } finally { setLoading(false); }
-  }
-
-  function openAddModal(mode) {
-    setAddModal({ show: true, mode });
-    setAddForm({ Branch: "", Basket: "", SubjectCode: "", SubjectName: "", Credits: "" });
-    setUploadFile(null);
-    setUploadProgress(0);
-  }
-
-  function closeAddModal() {
-    setAddModal({ show: false, mode: "manual" });
-    setAddForm({ Branch: "", Basket: "", SubjectCode: "", SubjectName: "", Credits: "" });
-    setUploadFile(null);
-    setUploadProgress(0);
-  }
-
-  async function saveManualSubject() {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/cbcs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addForm)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to add subject");
-      setSuccess("Subject added successfully");
-      closeAddModal();
-      await fetchItems();
-    } catch (err) {
-      setError(err.message);
-    } finally { setLoading(false); }
-  }
-
-  async function uploadSubjects() {
-    if (!uploadFile) return;
-    try {
-      setLoading(true);
-      setUploadProgress(0);
-      
-      const formData = new FormData();
-      formData.append("file", uploadFile);
-      
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
-      
-      setSuccess(`Successfully uploaded ${data.count || 0} subjects`);
-      closeAddModal();
-      await fetchItems();
-    } catch (err) {
-      setError(err.message);
-    } finally { 
-      setLoading(false);
-      setUploadProgress(0);
-    }
-  }
-
-  function handleFileChange(e) {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-      if (!validTypes.includes(file.type)) {
-        setError("Please select a valid CSV or Excel file");
-        return;
-      }
-      setUploadFile(file);
-      setError("");
-    }
-  }
+  // Removed all CRUD functions for teacher view-only access
 
   const totalSubjects = items.length;
 
@@ -219,8 +59,6 @@ export default function TeacherCBCSBasketPage() {
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/teacher" className="btn-secondary">← Back to Teacher</Link>
             <Link href="/dashboard/teacher/data/baskettrack" className="btn-info">Track Progress</Link>
-            <button onClick={() => openAddModal("manual")} className="btn btn-success">+ Add Subject</button>
-            <button onClick={() => openAddModal("upload")} className="btn btn-primary">📁 Upload File</button>
           </div>
         </div>
 
@@ -235,14 +73,7 @@ export default function TeacherCBCSBasketPage() {
           <div className="stat-card"><div className="stat-number">{baskets.length}</div><div className="stat-label">Baskets</div></div>
         </div>
 
-        {/* Bulk actions */}
-        {selectedIds.size > 0 && (
-          <div className="bulk-actions mb-4">
-            <span>{selectedIds.size}</span> subjects selected
-            <button onClick={bulkDelete} className="btn btn-danger ml-2">Delete Selected</button>
-            <button onClick={() => { setSelectedIds(new Set()); setSelectAll(false); }} className="btn btn-secondary ml-2">Clear Selection</button>
-          </div>
-        )}
+        {/* Removed bulk actions for teacher view-only access */}
 
         {/* Filters */}
         <div className="filters mb-6 rounded-lg">
@@ -285,35 +116,28 @@ export default function TeacherCBCSBasketPage() {
           <table className="table">
             <thead>
               <tr>
-                <th><input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.target.checked)} /></th>
                 <th>Branch</th>
                 <th>Basket</th>
                 <th>Subject Code</th>
                 <th>Subject Name</th>
                 <th>Credits</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="no-data">No subjects to display.</td>
+                  <td colSpan={5} className="no-data">No subjects to display.</td>
                 </tr>
               )}
               {items.map(s => {
                 const id = String(s._id);
                 return (
                   <tr key={id}>
-                    <td><input type="checkbox" checked={selectedIds.has(id)} onChange={e => toggleSelect(id, e.target.checked)} /></td>
                     <td>{s.Branch || ""}</td>
                     <td>{s.Basket || ""}</td>
                     <td><strong>{s["Subject Code"] || s.SubjectCode || ""}</strong></td>
                     <td>{s.Subject_name || s.Subject_Name || ""}</td>
                     <td>{s.Credits || ""}</td>
-                    <td>
-                      <button onClick={() => openEditModal(s)} className="btn btn-warning">Edit</button>
-                      <button onClick={() => removeOne(id)} className="btn btn-danger ml-2">Delete</button>
-                    </td>
                   </tr>
                 );
               })}
@@ -321,126 +145,7 @@ export default function TeacherCBCSBasketPage() {
           </table>
         </div>
 
-        {/* Edit Modal */}
-        {editModal.show && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>Edit Subject</h3>
-                <button onClick={closeEditModal} className="modal-close">&times;</button>
-              </div>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label>Branch</label>
-                  <select value={editForm.Branch} onChange={e => setEditForm({...editForm, Branch: e.target.value})} className="form-control">
-                    <option value="">Select Branch</option>
-                    {branches.map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Basket</label>
-                  <select value={editForm.Basket} onChange={e => setEditForm({...editForm, Basket: e.target.value})} className="form-control">
-                    <option value="">Select Basket</option>
-                    {baskets.map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Subject Code</label>
-                  <input value={editForm.SubjectCode} onChange={e => setEditForm({...editForm, SubjectCode: e.target.value})} className="form-control" />
-                </div>
-                <div className="form-group">
-                  <label>Subject Name</label>
-                  <input value={editForm.SubjectName} onChange={e => setEditForm({...editForm, SubjectName: e.target.value})} className="form-control" />
-                </div>
-                <div className="form-group">
-                  <label>Credits</label>
-                  <input type="number" value={editForm.Credits} onChange={e => setEditForm({...editForm, Credits: e.target.value})} className="form-control" />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button onClick={closeEditModal} className="btn btn-secondary">Cancel</button>
-                <button onClick={saveEdit} className="btn btn-success" disabled={loading}>Save Changes</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Add Subject Modal */}
-        {addModal.show && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>{addModal.mode === "manual" ? "Add New Subject" : "Upload Subjects"}</h3>
-                <button onClick={closeAddModal} className="modal-close">&times;</button>
-              </div>
-              <div className="modal-body">
-                {addModal.mode === "manual" ? (
-                  <>
-                    <div className="form-group">
-                      <label>Branch</label>
-                      <select value={addForm.Branch} onChange={e => setAddForm({...addForm, Branch: e.target.value})} className="form-control">
-                        <option value="">Select Branch</option>
-                        {branches.map(b => <option key={b} value={b}>{b}</option>)}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label>Basket</label>
-                      <select value={addForm.Basket} onChange={e => setAddForm({...addForm, Basket: e.target.value})} className="form-control">
-                        <option value="">Select Basket</option>
-                        {baskets.map(b => <option key={b} value={b}>{b}</option>)}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label>Subject Code</label>
-                      <input value={addForm.SubjectCode} onChange={e => setAddForm({...addForm, SubjectCode: e.target.value})} className="form-control" placeholder="e.g., CS101" />
-                    </div>
-                    <div className="form-group">
-                      <label>Subject Name</label>
-                      <input value={addForm.SubjectName} onChange={e => setAddForm({...addForm, SubjectName: e.target.value})} className="form-control" placeholder="e.g., Data Structures" />
-                    </div>
-                    <div className="form-group">
-                      <label>Credits</label>
-                      <input type="number" value={addForm.Credits} onChange={e => setAddForm({...addForm, Credits: e.target.value})} className="form-control" placeholder="e.g., 3" />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="form-group">
-                      <label>Select File (CSV or Excel)</label>
-                      <input type="file" onChange={handleFileChange} accept=".csv,.xlsx,.xls" className="form-control" />
-                      <small className="text-muted">Supported formats: CSV, Excel (.xlsx, .xls)</small>
-                    </div>
-                    {uploadFile && (
-                      <div className="alert alert-info">
-                        <strong>Selected File:</strong> {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
-                      </div>
-                    )}
-                    <div className="alert alert-info">
-                      <strong>File Format Requirements:</strong>
-                      <ul className="mt-2 text-sm">
-                        <li>First row should contain headers: Branch, Basket, Subject Code, Subject Name, Credits</li>
-                        <li>Each subsequent row should contain subject data</li>
-                        <li>Subject Code will be automatically converted to uppercase</li>
-                      </ul>
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="modal-footer">
-                <button onClick={closeAddModal} className="btn btn-secondary">Cancel</button>
-                {addModal.mode === "manual" ? (
-                  <button onClick={saveManualSubject} className="btn btn-success" disabled={loading || !addForm.Branch || !addForm.Basket || !addForm.SubjectCode || !addForm.SubjectName || !addForm.Credits}>
-                    {loading ? "Adding..." : "Add Subject"}
-                  </button>
-                ) : (
-                  <button onClick={uploadSubjects} className="btn btn-primary" disabled={loading || !uploadFile}>
-                    {loading ? "Uploading..." : "Upload File"}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Removed all modals for teacher view-only access */}
       </div>
 
       <style jsx>{`

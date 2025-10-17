@@ -578,6 +578,24 @@ Filtering Guide:
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">CUTM || Credits Tracker || Search</h1>
           <p className="text-gray-600">Track CBCS progress and basket completion status</p>
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg max-w-4xl mx-auto">
+            <div className="text-sm text-blue-800">
+              <span className="font-semibold">📋 Credit Requirements:</span>
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div>
+                  <span className="font-medium">Regular Students:</span> 160 total credits
+                  <div className="text-xs text-blue-600 ml-4">Basket I: 17, Basket II: 12, Basket III: 25, Basket IV: 58, Basket V: 48</div>
+                </div>
+                <div>
+                  <span className="font-medium">Lateral Entry Students:</span> <span className="font-bold text-orange-600">120 total credits</span>
+                  <div className="text-xs text-blue-600 ml-4">Basket I: 6, Basket II: 9, Basket III: 25, Basket IV: 48, Basket V: 32</div>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-blue-600">
+                💡 Lateral entry students are identified by registration numbers with "1" as the 9th character (e.g., 220101131056)
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search Form */}
@@ -684,11 +702,11 @@ Filtering Guide:
                 >
                   <option value="">Select Basket</option>
                   <option value="All">All Baskets</option>
-                  <option value="Basket I">Basket I (17 credits)</option>
-                  <option value="Basket II">Basket II (12 credits)</option>
+                  <option value="Basket I">Basket I (17/6 credits)</option>
+                  <option value="Basket II">Basket II (12/9 credits)</option>
                   <option value="Basket III">Basket III (25 credits)</option>
-                  <option value="Basket IV">Basket IV (58 credits)</option>
-                  <option value="Basket V">Basket V (48 credits)</option>
+                  <option value="Basket IV">Basket IV (58/48 credits)</option>
+                  <option value="Basket V">Basket V (48/32 credits)</option>
                 </select>
                 <div className="text-xs text-gray-500">
                   💡 Filter results by specific basket or view all baskets
@@ -719,7 +737,34 @@ Filtering Guide:
           </form>
         </div>
 
-        {/* FIXED: Error Display */}
+        {/* Lateral Entry Student Alert */}
+        {searchPerformed && !loading && registration !== "all" && studentData && studentData.is_lateral_entry && (
+          <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-orange-800">
+                  🎓 Lateral Entry Student Detected
+                </h3>
+                <div className="mt-2 text-sm text-orange-700">
+                  <p>
+                    <strong>{studentData.name}</strong> ({studentData.registration}) is a lateral entry student.
+                  </p>
+                  <p className="mt-1">
+                    <strong>Total Required Credits: <span className="text-orange-900 font-bold">120 credits</span></strong> (instead of 160 for regular students)
+                  </p>
+                  <div className="mt-2 text-xs">
+                    <strong>Modified Basket Requirements:</strong> Basket I: 6, Basket II: 9, Basket III: 25, Basket IV: 48, Basket V: 32
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
             <div className="flex">
@@ -839,12 +884,12 @@ Filtering Guide:
                     <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">Name</th>
                     <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">Registration No</th>
                     <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">Department</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket I (17)</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket II (12)</th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket I (17/6)</th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket II (12/9)</th>
                     <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket III (25)</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket IV (58)</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket V (48)</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Total Credits (160)</th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket IV (58/48)</th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Basket V (48/32)</th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900">Total Credits (160/120)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -863,6 +908,11 @@ Filtering Guide:
                       </td>
                       <td className="border border-gray-300 px-4 py-3 text-sm text-gray-900">
                         {student.department || 'Unknown'}
+                        {student.is_lateral_entry && (
+                          <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                            Lateral Entry
+                          </span>
+                        )}
                       </td>
                       <td 
                         className="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-center cursor-pointer hover:bg-blue-50 text-blue-600 hover:text-blue-800 font-medium transition-colors"
@@ -901,6 +951,11 @@ Filtering Guide:
                       </td>
                       <td className="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-center font-semibold bg-gray-50">
                         {student.totalCredits || student.total || 0}
+                        {student.is_lateral_entry && (
+                          <div className="text-xs text-orange-600 mt-1">
+                            /{student.totalRequiredCredits || 120}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -966,6 +1021,27 @@ Filtering Guide:
             </div>
 
             <div className="p-6">
+              {/* Total Credits Summary Card for Lateral Entry */}
+              {studentData.is_lateral_entry && (
+                <div className="mb-6 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">120</span>
+                      </div>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-lg font-semibold text-orange-800">
+                        Lateral Entry Student - Total Required Credits
+                      </h3>
+                      <p className="text-orange-700 text-sm">
+                        This student requires <strong className="text-orange-900">120 total credits</strong> to complete their degree (instead of 160 for regular students).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Student Information Section */}
               <div className="mb-6">
                 <h4 className="text-md font-semibold text-gray-800 mb-3">Student Information</h4>
@@ -983,6 +1059,28 @@ Filtering Guide:
                       <tr className="border-b border-gray-200">
                         <td className="px-4 py-3 font-semibold text-gray-700 bg-gray-50">Registration No:</td>
                         <td className="px-4 py-3 text-gray-900 font-mono">{studentData.registration || 'Unknown'}</td>
+                      </tr>
+                      <tr className="border-b border-gray-200">
+                        <td className="px-4 py-3 font-semibold text-gray-700 bg-gray-50">Student Type:</td>
+                        <td className="px-4 py-3 text-gray-900">
+                          {studentData.student_type || 'Regular'}
+                          {studentData.is_lateral_entry && (
+                            <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                              Lateral Entry
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-200">
+                        <td className="px-4 py-3 font-semibold text-gray-700 bg-gray-50">Total Required Credits:</td>
+                        <td className="px-4 py-3 text-gray-900">
+                          <span className={`font-bold ${studentData.is_lateral_entry ? 'text-orange-600' : 'text-blue-600'}`}>
+                            {studentData.overall_stats?.total_required_credits || (studentData.is_lateral_entry ? 120 : 160)} credits
+                          </span>
+                          {studentData.is_lateral_entry && (
+                            <span className="ml-2 text-xs text-gray-500">(Lateral Entry)</span>
+                          )}
+                        </td>
                       </tr>
                       <tr>
                         <td className="px-4 py-3 font-semibold text-gray-700 bg-gray-50">Semester:</td>
@@ -1059,7 +1157,14 @@ Filtering Guide:
                       {Object.entries(basketProgress || {}).length > 0 && (
                         <tr className="bg-gray-50 border-t-2 border-gray-300">
                           <td className="px-4 py-3 font-semibold text-center text-gray-900" colSpan="2">Total</td>
-                          <td className="px-4 py-3 text-center font-semibold text-gray-900">{overallStats.totalRequired}</td>
+                          <td className="px-4 py-3 text-center font-semibold text-gray-900">
+                            {studentData.is_lateral_entry ? 120 : overallStats.totalRequired}
+                            {studentData.is_lateral_entry && (
+                              <div className="text-xs text-orange-600 mt-1">
+                                Lateral Entry Total
+                              </div>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-center font-semibold text-green-600">{overallStats.totalEarned}</td>
                           <td className="px-4 py-3 text-center font-semibold text-red-600">{overallStats.totalFailed}</td>
                           <td className="px-4 py-3 text-center font-semibold text-gray-900">{overallStats.totalCredits}</td>
@@ -1071,6 +1176,11 @@ Filtering Guide:
                             }`}>
                               {overallStats.percentage >= 100 ? "Completed" : "Not Completed"}
                             </span>
+                            {studentData.is_lateral_entry && (
+                              <div className="text-xs text-orange-600 mt-1">
+                                Lateral Entry Student
+                              </div>
+                            )}
                           </td>
                         </tr>
                       )}
@@ -1088,9 +1198,18 @@ Filtering Guide:
             <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
               {/* Modal Header */}
               <div className="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
-                <h3 className="text-xl font-semibold">
-                  {selectedBasket.name} - Detailed Subjects
-                </h3>
+                <div>
+                  <h3 className="text-xl font-semibold">
+                    {selectedBasket.name} - Detailed Subjects
+                  </h3>
+                  {studentData?.is_lateral_entry && (
+                    <div className="mt-1">
+                      <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded-full">
+                        Lateral Entry Student - Modified Credit Requirements
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={closeBasketDetails}
                   className="text-white hover:text-gray-200 text-2xl font-bold transition-colors"
@@ -1123,6 +1242,15 @@ Filtering Guide:
                       </span>
                     </div>
                   </div>
+                  {studentData?.is_lateral_entry && (
+                    <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded text-sm">
+                      <span className="font-semibold text-orange-800">Note:</span>
+                      <span className="text-orange-700 ml-1">
+                        This student is a lateral entry student with modified credit requirements. 
+                        Total required credits: 120 (instead of 160 for regular students).
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Subjects Table */}
