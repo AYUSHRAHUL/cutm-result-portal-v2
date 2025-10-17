@@ -33,6 +33,7 @@ export default function UserDashboard() {
     'Semester 1', 'Semester 2', 'Semester 3', 'Semester 4',
     'Semester 5', 'Semester 6', 'Semester 7', 'Semester 8'
   ];
+  const ALL_OPTION = 'ALL';
 
   // Loading messages sequence
   const loadingMessages = [
@@ -146,11 +147,15 @@ export default function UserDashboard() {
   // Handle semester checkbox change
   const handleSemesterChange = (semester) => {
     setSelectedSemesters(prev => {
-      if (prev.includes(semester)) {
-        return prev.filter(s => s !== semester);
-      } else {
-        return [...prev, semester];
+      // Special handling for ALL option: exclusive selection
+      if (semester === ALL_OPTION) {
+        return prev.includes(ALL_OPTION) ? [] : [ALL_OPTION];
       }
+      const withoutAll = prev.filter(s => s !== ALL_OPTION);
+      if (withoutAll.includes(semester)) {
+        return withoutAll.filter(s => s !== semester);
+      }
+      return [...withoutAll, semester];
     });
   };
 
@@ -254,12 +259,15 @@ export default function UserDashboard() {
 
   // Determine which semesters to show
   const availableSemesters = semesters.length > 0 ? semesters : defaultSemesters;
+  const availableWithAll = [ALL_OPTION, ...availableSemesters];
   const showSemesters = registration.length >= 6 || semesters.length > 0;
 
   // Get selected text for multi-select header
   const getSelectedText = () => {
     if (selectedSemesters.length === 0) {
       return "Choose your semester(s)";
+    } else if (selectedSemesters.includes(ALL_OPTION)) {
+      return ALL_OPTION;
     } else if (selectedSemesters.length === 1) {
       return selectedSemesters[0];
     } else {
@@ -1096,8 +1104,8 @@ export default function UserDashboard() {
                             position: 'relative'
                           }}
                         >
-                          {availableSemesters.length > 0 ? (
-                            availableSemesters.map((semester, index) => (
+                          {availableWithAll.length > 0 ? (
+                            availableWithAll.map((semester, index) => (
                               <label
                                 key={semester}
                                 role="option"
@@ -1110,14 +1118,14 @@ export default function UserDashboard() {
                                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                   margin: 0,
                                   fontWeight: selectedSemesters.includes(semester) ? 600 : 500,
-                                  borderBottom: index === availableSemesters.length - 1 ? 'none' : '1px solid rgba(59, 130, 246, 0.08)',
+                                  borderBottom: index === availableWithAll.length - 1 ? 'none' : '1px solid rgba(59, 130, 246, 0.08)',
                                   fontSize: '1rem',
                                   position: 'relative',
                                   background: selectedSemesters.includes(semester) 
                                     ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.05))' 
                                     : 'transparent',
                                   color: selectedSemesters.includes(semester) ? '#1e40af' : '#374151',
-                                  borderRadius: index === 0 ? '0' : index === availableSemesters.length - 1 ? '0 0 10px 10px' : '0'
+                                  borderRadius: index === 0 ? '0' : index === availableWithAll.length - 1 ? '0 0 10px 10px' : '0'
                                 }}
                                 onMouseEnter={(e) => {
                                   e.currentTarget.style.background = selectedSemesters.includes(semester) 
